@@ -33,7 +33,7 @@ class Testing(object):
         self.test_loader = self.loading_data()
 
         # run
-        self.test()
+        self.process()
 
     # Loading P3D model
     def loading_model(self):
@@ -105,7 +105,7 @@ class Testing(object):
         return test_loader
 
     # Test
-    def test(self):
+    def process(self):
         acc = AverageMeter()
         top1 = AverageMeter()
         top5 = AverageMeter()
@@ -152,7 +152,6 @@ class Testing(object):
         logging.info(
             ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f} Loss {loss.avg:.3f}'.format(acc=acc, top5=top5,
                                                                                          loss=losses))
-        return
 
     # get accuracy from y pred
     def accuracy(self, y_pred, y_actual, topk=(1,)):
