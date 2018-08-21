@@ -24,34 +24,39 @@ This repo implements the network structure of P3D[1] with PyTorch, pre-trained m
  
 ### Prepare Dataset UCF101
 First, download the dataset from UCF into the data folder and then extract it.
-- `cd data && wget http://crcv.ucf.edu/data/UCF101/UCF101.rar`
-- `unrar e UCF101.rar`
+```
+cd data && wget http://crcv.ucf.edu/data/UCF101/UCF101.rar
+unrar e UCF101.rar
+```
 
 Next, make 3 folders train, test and validation:
-- `mkdir train test validation`
-
+```
+mkdir train test validation
+```
 Finally, run scripts to extract image frames from videos;
-- `python move.py`
-- `python makeVideoFolder.py`
-- `python extract.py`
+```
+python move.py
+python makeVideoFolder.py
+python extract.py
+```
 
 ### Run Code
 1, For Training from scratch
-
-`python main.py /path/data/`
-
+```
+python main.py /path/data/
+```
 2, For Fine-tuning
-
-`python main.py /path/data/ --pretrained`
-
+```
+python main.py /path/data/ --pretrained
+```
 3, For Evaluate model
-
-`python main.py /path/data/ --resume=checkpoint.pth.tar --evaluate`
-
+```
+python main.py /path/data/ --resume=checkpoint.pth.tar --evaluate
+```
 4, For testing model
-
-`python main.py /path/data/ --test`
-
+```
+python main.py /path/data/ --test
+```
 
 ### Experiment Result From Us
 modality/model | RGB | Flow | Fusion
