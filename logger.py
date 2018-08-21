@@ -2,6 +2,7 @@ import logging
 
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
+
 def Logger(name, log_file, level=logging.INFO):
     """Function setup as many loggers as you want"""
 
