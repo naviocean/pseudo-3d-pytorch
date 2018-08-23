@@ -24,6 +24,8 @@ class Training(object):
         self.modality = modality
         self.Dataset = Dataset
 
+        # set accuracy avg = 0
+        self.early_stop = 0
         # Set best precision = 0
         self.best_prec1 = 0
         # init start epoch = 0
@@ -37,6 +39,19 @@ class Training(object):
 
         # run
         self.processing()
+
+    def check_early_stop(self, accuracy, logger, start_time):
+        if self.best_prec1 <= accuracy:
+            self.early_stop = 0
+        else:
+            self.early_stop += 1
+
+        if self.early_stop > 10:
+            print('Early stop')
+            end_time = time.time()
+            print("--- Total training time %s seconds ---" % (end_time - start_time))
+            logger.info("--- Total training time %s seconds ---" % (end_time - start_time))
+            exit()
 
     def checkDataFolder(self):
         try:
@@ -177,6 +192,8 @@ class Training(object):
                 'best_prec1': self.best_prec1,
                 'optimizer': self.optimizer.state_dict(),
             }, is_best)
+
+            self.check_early_stop(prec1, logger, start_time)
 
         end_time = time.time()
         print("--- Total training time %s seconds ---" % (end_time - start_time))

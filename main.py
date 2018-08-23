@@ -15,7 +15,7 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='man
 parser.add_argument('-b', '--batch-size', default=16, type=int, metavar='N', help='mini-batch size (default: 256)')
 parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float, metavar='LR', help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
-parser.add_argument('--weight-decay', default=0, type=float, metavar='W', help='weight decay')
+parser.add_argument('--weight-decay', default=1e-4, type=float, metavar='W', help='weight decay')
 parser.add_argument('--print-freq', default=1, type=int, metavar='N', help='print frequency')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint')
 parser.add_argument('--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
