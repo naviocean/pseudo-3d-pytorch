@@ -29,12 +29,21 @@ class Training(object):
         # init start epoch = 0
         self.start_epoch = 0
 
+        self.checkDataFolder()
+
         self.loading_model()
 
         self.train_loader, self.val_loader = self.loading_data()
 
         # run
         self.processing()
+
+    def checkDataFolder(self):
+        try:
+            os.stat('./' + self.data_set)
+        except:
+            os.mkdir('./' + self.data_set)
+        self.data_folder = './' + self.data_set
 
     # Loading P3D model
     def loading_model(self):
@@ -81,10 +90,11 @@ class Training(object):
             else:
                 print("=> no checkpoint found at '{}'".format(self.resume))
 
-        if self.evaluate or self.test:
-            if os.path.isfile('model_best.pth.tar'):
+        if self.evaluate:
+            file_model_best = os.path.join(self.data_folder, 'model_best.pth.tar')
+            if os.path.isfile(file_model_best):
                 print("=> loading checkpoint '{}'".format('model_best.pth.tar'))
-                checkpoint = torch.load(self.resume)
+                checkpoint = torch.load(file_model_best)
                 self.start_epoch = checkpoint['epoch']
                 self.best_prec1 = checkpoint['best_prec1']
                 self.model.load_state_dict(checkpoint['state_dict'])
@@ -136,11 +146,12 @@ class Training(object):
             num_workers=self.workers,
             pin_memory=True)
 
-
         return (train_loader, val_loader)
 
     def processing(self):
-        logger = Logger('main', 'main.log')
+        log_file = os.path.join(self.data_folder,'train.log');
+
+        logger = Logger('train', log_file)
 
         if self.evaluate:
             self.validate()
@@ -155,7 +166,7 @@ class Training(object):
             self.train(logger, epoch)
 
             # evaluate on validation set
-            prec1 = self.validate()
+            prec1 = self.validate(logger)
 
             # remember best Accuracy and save checkpoint
             is_best = prec1 > self.best_prec1
@@ -221,17 +232,17 @@ class Training(object):
                                                                       batch_time=batch_time, data_time=data_time,
                                                                       loss=losses, top1=top1, top5=top5))
 
-            logger.info('Epoch: [{0}/{1}]\t'
-                        'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                        'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                        'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                        'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, batch_time=batch_time,
-                                                                        data_time=data_time, loss=losses, top1=top1,
-                                                                        top5=top5))
+        logger.info('Epoch: [{0}/{1}]\t'
+                    'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                    'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                    'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                    'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, batch_time=batch_time,
+                                                                    data_time=data_time, loss=losses, top1=top1,
+                                                                    top5=top5))
 
     # Validation
-    def validate(self):
+    def validate(self,logger):
         batch_time = AverageMeter()
         losses = AverageMeter()
         acc = AverageMeter()
@@ -272,16 +283,17 @@ class Training(object):
                     i, len(self.val_loader), batch_time=batch_time, loss=losses, top1=top1, top5=top5))
 
         print(' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
-        logging.info(' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
+        logger.info(' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
 
         return acc.avg
 
-
     # save checkpoint to file
-    def save_checkpoint(self, state, is_best, filename='checkpoint.pth.tar'):
-        torch.save(state, filename)
+    def save_checkpoint(self, state, is_best):
+        checkpoint = os.path.join(self.data_folder, 'checkpoint.pth.tar')
+        torch.save(state, checkpoint)
+        model_best = os.path.join(self.data_folder, 'model_best.pth.tar')
         if is_best:
-            shutil.copyfile(filename, 'model_best.pth.tar')
+            shutil.copyfile(checkpoint, model_best)
 
     # adjust learning rate for each epoch
     def adjust_learning_rate(self, epoch):

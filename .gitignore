@@ -1,2 +1,4 @@
 *.tar
 .DS_Store
+__pycache__
+lib/

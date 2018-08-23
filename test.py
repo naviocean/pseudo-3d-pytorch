@@ -28,12 +28,22 @@ class Testing(object):
         # init start epoch = 0
         self.start_epoch = 0
 
+        self.checkDataFolder()
+
         self.loading_model()
 
         self.test_loader = self.loading_data()
 
         # run
         self.process()
+
+    def checkDataFolder(self):
+        try:
+            os.stat('./' + self.data_set)
+        except:
+            os.mkdir('./' + self.data_set)
+
+        self.data_folder = './' + self.data_set
 
     # Loading P3D model
     def loading_model(self):
@@ -63,9 +73,11 @@ class Testing(object):
 
         self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
 
-        if os.path.isfile('model_best.pth.tar'):
+        file = os.path.join(self.data_folder, 'model_best.pth.tar')
+        if os.path.isfile(file):
             print("=> loading checkpoint '{}'".format('model_best.pth.tar'))
-            checkpoint = torch.load('model_best.pth.tar')
+
+            checkpoint = torch.load(file)
             self.start_epoch = checkpoint['epoch']
             self.best_prec1 = checkpoint['best_prec1']
             self.model.load_state_dict(checkpoint['state_dict'])
@@ -110,7 +122,8 @@ class Testing(object):
         top1 = AverageMeter()
         top5 = AverageMeter()
         losses = AverageMeter()
-        logger = Logger('test', 'test.log')
+        log_file = os.path.join(self.data_folder, 'test.log')
+        logger = Logger('test', log_file)
         # switch to evaluate mode
         self.model.eval()
 

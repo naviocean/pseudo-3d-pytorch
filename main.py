@@ -3,9 +3,12 @@ import argparse
 from train import Training
 from test import Testing
 from ufc101_dataset import UCF101Dataset
+from breakfirst_dataset import BreakfastDataset
+
 
 parser = argparse.ArgumentParser(description='PyTorch Pseudo-3D fine-tuning')
 parser.add_argument('data', metavar='DIR', help='path to dataset')
+parser.add_argument('--data-set', default='UCF101', const='UCF101', nargs='?', choices=['UCF101', 'Breakfast'])
 parser.add_argument('--workers', default=4, type=int, metavar='N', help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=75, type=int, metavar='N', help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='manual epoch number (useful on restarts)')
@@ -23,10 +26,20 @@ parser.add_argument('--pretrained', dest='pretrained', action='store_true', help
 def main():
     args = parser.parse_args()
     args = vars(args)
-    if args['test']:
-        Testing(Dataset=UCF101Dataset, num_classes=101, modality='RGB', **args)
+
+    if args['data_set'] == 'UCF101':
+        print('UCF101')
+        Dataset = UCF101Dataset
+        num_classes = 101
     else:
-        Training(Dataset=UCF101Dataset, num_classes=101, modality='RGB', **args)
+        print("breakfast")
+        num_classes = 37
+        Dataset = BreakfastDataset
+
+    if args['test']:
+        Testing(Dataset=Dataset, num_classes=num_classes, modality='RGB', **args)
+    else:
+        Training(Dataset=Dataset, num_classes=num_classes, modality='RGB', **args)
 
 
 if __name__ == '__main__':
