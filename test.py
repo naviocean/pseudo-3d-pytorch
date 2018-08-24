@@ -162,7 +162,7 @@ class Testing(object):
         end_time = time.clock()
         print("Total testing time %.2gs" % (end_time - start_time))
         logger.info("Total testing time %.2gs" % (end_time - start_time))
-        logging.info(
+        logger.info(
             ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f} Loss {loss.avg:.3f}'.format(acc=acc, top5=top5,
                                                                                          loss=losses))
 

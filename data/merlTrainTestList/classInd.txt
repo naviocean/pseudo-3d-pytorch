@@ -1,0 +1,5 @@
+1 ReachToShelf
+2 RetractFromShelf
+3 HandInShelf
+4 InspectProduct
+5 InspectShelf

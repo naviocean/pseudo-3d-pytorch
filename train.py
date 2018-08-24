@@ -3,7 +3,6 @@ import os
 import os.path
 import shutil
 import time
-import logging
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -25,7 +24,7 @@ class Training(object):
         self.Dataset = Dataset
 
         # set accuracy avg = 0
-        self.early_stop = 0
+        self.count_early_stop = 0
         # Set best precision = 0
         self.best_prec1 = 0
         # init start epoch = 0
@@ -42,11 +41,11 @@ class Training(object):
 
     def check_early_stop(self, accuracy, logger, start_time):
         if self.best_prec1 <= accuracy:
-            self.early_stop = 0
+            self.count_early_stop = 0
         else:
-            self.early_stop += 1
+            self.count_early_stop += 1
 
-        if self.early_stop > 10:
+        if self.count_early_stop > self.early_stop:
             print('Early stop')
             end_time = time.time()
             print("--- Total training time %s seconds ---" % (end_time - start_time))
