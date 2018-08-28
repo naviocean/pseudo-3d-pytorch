@@ -6,20 +6,21 @@ import numpy as np
 from torch.utils.data import Dataset
 
 
-class BreakfastDataset(Dataset):
-    def __init__(self, root_path, data_folder, version=1, transform=None, num_frame=16, modality='RGB'):
+class MyDataset(Dataset):
+    def __init__(self, root_path, data_folder='train', name_list='ucfTrainTestlist', version=1, transform=None, num_frames=16, modality='RGB'):
         self.root_path = root_path
+        self.num_frames = num_frames
         self.data_folder = data_folder
-        self.split_file = os.path.join(self.root_path,
-                                       'breakfastTrainTestList/' + str(data_folder) + 'list0' + str(version) + '.txt')
-        self.label_file = os.path.join(self.root_path, 'breakfastTrainTestList/classInd.txt')
+        self.split_file = os.path.join(self.root_path, name_list,
+                                       str(data_folder) + 'list0' + str(version) + '.txt')
+        print(self.split_file)
+        self.label_file = os.path.join(self.root_path, name_list, 'classInd.txt')
         self.label_dict = self.get_labels()
 
         self.video_dict = self.get_video_list()
 
         self.version = version
         self.transform = transform
-        self.num_frame = num_frame
 
     def get_video_list(self):
         res = []
@@ -27,7 +28,13 @@ class BreakfastDataset(Dataset):
             for line in list(fin):
                 line = line.replace("\n", "")
                 split = line.split(" ")
-                res.append(split[0])
+                # get number frames of each video
+                video_path = split[0].split('.')[0]
+                frames_path = os.path.join(self.root_path, self.data_folder, video_path)
+                allfiles = glob.glob(frames_path + '/*.jpg')
+                # remove video which has < 16 image frames
+                if len(allfiles) >= self.num_frames:
+                    res.append(split[0])
         return res
 
     # Get all labels from classInd.txt
@@ -49,9 +56,11 @@ class BreakfastDataset(Dataset):
 
     def get_video_tensor(self, dir):
         images = self.get_all_images(dir)
-        seed = np.random.random_integers(0, len(images) - self.num_frame)  # random sampling
+        # print(dir)
+        # print(len(images))
+        seed = np.random.random_integers(0, len(images) - self.num_frames)  # random sampling
         clip = list()
-        for i in range(self.num_frame):
+        for i in range(self.num_frames):
             img = Image.open(images[i + seed])
             clip.append(img)
         clip = self.transform(clip)

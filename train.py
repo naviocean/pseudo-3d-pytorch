@@ -13,16 +13,15 @@ from meter import AverageMeter
 from lib.p3d_model import P3D199, get_optim_policies
 from logger import Logger
 import video_transforms
+from Dataset import MyDataset
 
 
 class Training(object):
-    def __init__(self, Dataset, num_classes=400, modality='RGB', **kwargs):
+    def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
         self.__dict__.update(kwargs)
-
         self.num_classes = num_classes
         self.modality = modality
-        self.Dataset = Dataset
-
+        self.name_list = name_list
         # set accuracy avg = 0
         self.count_early_stop = 0
         # Set best precision = 0
@@ -61,14 +60,15 @@ class Training(object):
 
     # Loading P3D model
     def loading_model(self):
-        # Loading P3D model
+
+        print('Loading P3D model')
         if self.pretrained:
             print("=> using pre-trained model")
-            self.model = P3D199(pretrained=True, num_classes=400)
+            self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
 
         else:
             print("=> creating model P3D")
-            self.model = P3D199(pretrained=False, num_classes=400)
+            self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
 
         # Transfer classes
         self.transfer_model()
@@ -121,29 +121,36 @@ class Training(object):
 
     # Loading data
     def loading_data(self):
+        size = 160
 
         normalize = video_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        train_transformations = video_transforms.Compose([video_transforms.RandomResizedCrop(160),
-                                                          video_transforms.RandomHorizontalFlip(),
-                                                          video_transforms.ToTensor(),
-                                                          normalize])
+        train_transformations = video_transforms.Compose([
+            video_transforms.RandomResizedCrop(size),
+            video_transforms.RandomHorizontalFlip(),
+            video_transforms.ToTensor(),
+            normalize])
+
         val_transformations = video_transforms.Compose([
             video_transforms.Resize((182, 242)),
-            video_transforms.CenterCrop(160),
+            video_transforms.CenterCrop(size),
             video_transforms.ToTensor(),
             normalize
         ])
 
-        train_dataset = self.Dataset(
+        train_dataset = MyDataset(
             self.data,
             data_folder="train",
-            transform=train_transformations)
+            name_list=self.name_list,
+            version="1",
+            transform=train_transformations,
+        )
 
-        val_dataset = self.Dataset(
+        val_dataset = MyDataset(
             self.data,
             data_folder="validation",
+            name_list=self.name_list,
             version="1",
-            transform=val_transformations
+            transform=val_transformations,
         )
 
         train_loader = data.DataLoader(
@@ -158,12 +165,12 @@ class Training(object):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.workers,
-            pin_memory=True)
+            pin_memory=False)
 
         return (train_loader, val_loader)
 
     def processing(self):
-        log_file = os.path.join(self.data_folder,'train.log');
+        log_file = os.path.join(self.data_folder, 'train.log');
 
         logger = Logger('train', log_file)
 
@@ -258,7 +265,7 @@ class Training(object):
                                                                     top5=top5))
 
     # Validation
-    def validate(self,logger):
+    def validate(self, logger):
         batch_time = AverageMeter()
         losses = AverageMeter()
         acc = AverageMeter()
@@ -343,5 +350,8 @@ class Training(object):
         return num_gpus
 
     def transfer_model(self):
-        num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, self.num_classes)
+        if self.model_type == 'P3D':
+            num_ftrs = self.model.fc.in_features
+            self.model.fc = nn.Linear(num_ftrs, self.num_classes)
+        elif self.model_type == 'C3D':
+            self.model.fc8 = nn.Linear(4096, self.num_classes)
