@@ -59,10 +59,10 @@ python main.py /path/data/ --test
 ```
 
 ### Experiment Result From Us
-modality/model | RGB | Flow | Fusion
----|---|---|---
-P3D199 (Kinetics) | 81.6% | None| None
-MERL Shopping (Kinetics) | 80.4% | None | None
+Dataset | Accuracy
+---|---|
+UCF-101 | 81.6%
+MERL Shopping | 80.4%
 
 Reference:
 
