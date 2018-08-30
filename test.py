@@ -12,7 +12,9 @@ import torch.utils.data as data
 from meter import AverageMeter
 from lib.p3d_model import P3D199, get_optim_policies
 from logger import Logger
-import video_transforms
+# import video_transforms
+# from video_transforms import *
+from transforms import *
 from Dataset import MyDataset
 
 
@@ -95,12 +97,12 @@ class Testing(object):
     def loading_data(self):
         size = 160
 
-        normalize = video_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], size=size)
+        normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-        val_transformations = video_transforms.Compose([
-            video_transforms.Resize((182, 242)),
-            video_transforms.CenterCrop(size),
-            video_transforms.ToTensor(),
+        val_transformations = Compose([
+            Resize((182, 242)),
+            CenterCrop(size),
+            ToTensor(),
             normalize
         ])
 
@@ -109,7 +111,8 @@ class Testing(object):
             name_list=self.name_list,
             data_folder="test",
             version="1",
-            transform=val_transformations
+            transform=val_transformations,
+            num_frames=self.num_frames
         )
 
         test_loader = data.DataLoader(
@@ -118,6 +121,7 @@ class Testing(object):
             shuffle=False,
             num_workers=1,
             pin_memory=False)
+
         return test_loader
 
     # Test

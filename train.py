@@ -121,7 +121,7 @@ class Training(object):
     def loading_data(self):
         size = 160
 
-        normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], num_frames=self.num_frames)
+        normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         train_transformations = Compose([
             RandomSizedCrop(size),
             RandomHorizontalFlip(),

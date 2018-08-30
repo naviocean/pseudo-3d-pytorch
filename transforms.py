@@ -76,21 +76,16 @@ class RandomHorizontalFlip(object):
 
 
 class Normalize(object):
-    def __init__(self, mean, std, num_frames=16, channel=3):
+    def __init__(self, mean, std):
         self.mean = mean
         self.std = std
-        self.num_frames = num_frames
-        self.channel= channel
 
     def __call__(self, tensor):
         rep_mean = self.mean * (tensor.size()[0] // len(self.mean))
         rep_std = self.std * (tensor.size()[0] // len(self.std))
-        # tensor = tensor.contiguous().view(3 * 16, 160, 160)
         # TODO: make efficient
         for t, m, s in zip(tensor, rep_mean, rep_std):
             t.sub_(m).div_(s)
-
-        # tensor = tensor.view(self.channel, self.num_frames, 160, 160)
         return tensor
 
 
