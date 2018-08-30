@@ -3,7 +3,6 @@ import os
 import os.path
 import shutil
 import time
-import logging
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -13,17 +12,19 @@ import torch.utils.data as data
 from meter import AverageMeter
 from lib.p3d_model import P3D199, get_optim_policies
 from logger import Logger
-import video_transforms
+# from video_transforms import *
+from transforms import *
+from Dataset import MyDataset
 
 
 class Training(object):
-    def __init__(self, Dataset, num_classes=400, modality='RGB', **kwargs):
+    def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
         self.__dict__.update(kwargs)
-
         self.num_classes = num_classes
         self.modality = modality
-        self.Dataset = Dataset
-
+        self.name_list = name_list
+        # set accuracy avg = 0
+        self.count_early_stop = 0
         # Set best precision = 0
         self.best_prec1 = 0
         # init start epoch = 0
@@ -38,6 +39,19 @@ class Training(object):
         # run
         self.processing()
 
+    def check_early_stop(self, accuracy, logger, start_time):
+        if self.best_prec1 <= accuracy:
+            self.count_early_stop = 0
+        else:
+            self.count_early_stop += 1
+
+        if self.count_early_stop > self.early_stop:
+            print('Early stop')
+            end_time = time.time()
+            print("--- Total training time %s seconds ---" % (end_time - start_time))
+            logger.info("--- Total training time %s seconds ---" % (end_time - start_time))
+            exit()
+
     def checkDataFolder(self):
         try:
             os.stat('./' + self.data_set)
@@ -47,14 +61,16 @@ class Training(object):
 
     # Loading P3D model
     def loading_model(self):
-        # Loading P3D model
+
+        print('Loading %s model' % (self.model_type))
+
         if self.pretrained:
             print("=> using pre-trained model")
-            self.model = P3D199(pretrained=True, num_classes=400)
+            self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
 
         else:
             print("=> creating model P3D")
-            self.model = P3D199(pretrained=False, num_classes=400)
+            self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
 
         # Transfer classes
         self.transfer_model()
@@ -71,11 +87,8 @@ class Training(object):
 
         policies = get_optim_policies(model=self.model, modality=self.modality, enable_pbn=True)
 
-        # if self.pretrained:
         self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
-        # else:
-        #     self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum,
-        #                                weight_decay=self.weight_decay)
+
 
         # optionally resume from a checkpoint
         if self.resume:
@@ -107,29 +120,38 @@ class Training(object):
 
     # Loading data
     def loading_data(self):
+        size = 160
 
-        normalize = video_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        train_transformations = video_transforms.Compose([video_transforms.RandomResizedCrop(160),
-                                                          video_transforms.RandomHorizontalFlip(),
-                                                          video_transforms.ToTensor(),
-                                                          normalize])
-        val_transformations = video_transforms.Compose([
-            video_transforms.Resize((182, 242)),
-            video_transforms.CenterCrop(160),
-            video_transforms.ToTensor(),
+        normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], num_frames=self.num_frames)
+        train_transformations = Compose([
+            RandomSizedCrop(size),
+            RandomHorizontalFlip(),
+            ToTensor(),
+            normalize])
+
+        val_transformations = Compose([
+            Resize((182, 242)),
+            CenterCrop(size),
+            ToTensor(),
             normalize
         ])
 
-        train_dataset = self.Dataset(
+        train_dataset = MyDataset(
             self.data,
             data_folder="train",
-            transform=train_transformations)
+            name_list=self.name_list,
+            version="1",
+            transform=train_transformations,
+            num_frames=self.num_frames
+        )
 
-        val_dataset = self.Dataset(
+        val_dataset = MyDataset(
             self.data,
             data_folder="validation",
+            name_list=self.name_list,
             version="1",
-            transform=val_transformations
+            transform=val_transformations,
+            num_frames=self.num_frames
         )
 
         train_loader = data.DataLoader(
@@ -149,12 +171,12 @@ class Training(object):
         return (train_loader, val_loader)
 
     def processing(self):
-        log_file = os.path.join(self.data_folder,'train.log');
+        log_file = os.path.join(self.data_folder, 'train.log');
 
         logger = Logger('train', log_file)
 
         if self.evaluate:
-            self.validate()
+            self.validate(logger)
             return
 
         start_time = time.time()
@@ -177,6 +199,8 @@ class Training(object):
                 'best_prec1': self.best_prec1,
                 'optimizer': self.optimizer.state_dict(),
             }, is_best)
+
+            self.check_early_stop(prec1, logger, start_time)
 
         end_time = time.time()
         print("--- Total training time %s seconds ---" % (end_time - start_time))
@@ -242,7 +266,7 @@ class Training(object):
                                                                     top5=top5))
 
     # Validation
-    def validate(self,logger):
+    def validate(self, logger):
         batch_time = AverageMeter()
         losses = AverageMeter()
         acc = AverageMeter()
@@ -327,5 +351,8 @@ class Training(object):
         return num_gpus
 
     def transfer_model(self):
-        num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, self.num_classes)
+        if self.model_type == 'P3D':
+            num_ftrs = self.model.fc.in_features
+            self.model.fc = nn.Linear(num_ftrs, self.num_classes)
+        elif self.model_type == 'C3D':
+            self.model.fc8 = nn.Linear(4096, self.num_classes)

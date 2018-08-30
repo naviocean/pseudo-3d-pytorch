@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 import os.path
 import time
-import logging
+import torchvision
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -13,15 +13,16 @@ from meter import AverageMeter
 from lib.p3d_model import P3D199, get_optim_policies
 from logger import Logger
 import video_transforms
+from Dataset import MyDataset
 
 
 class Testing(object):
-    def __init__(self, Dataset, num_classes=400, modality='RGB', **kwargs):
+    def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
         self.__dict__.update(kwargs)
 
         self.num_classes = num_classes
         self.modality = modality
-        self.Dataset = Dataset
+        self.name_list = name_list
 
         # Set best precision = 0
         self.best_prec1 = 0
@@ -48,13 +49,14 @@ class Testing(object):
     # Loading P3D model
     def loading_model(self):
         # Loading P3D model
+
         if self.pretrained:
             print("=> using pre-trained model")
-            self.model = P3D199(pretrained=True, num_classes=400)
+            self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
 
         else:
             print("=> creating model P3D")
-            self.model = P3D199(pretrained=False, num_classes=400)
+            self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
 
         # Transfer classes
         self.transfer_model()
@@ -91,18 +93,20 @@ class Testing(object):
 
     # Loading data
     def loading_data(self):
+        size = 160
 
-        normalize = video_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        normalize = video_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], size=size)
 
         val_transformations = video_transforms.Compose([
             video_transforms.Resize((182, 242)),
-            video_transforms.CenterCrop(160),
+            video_transforms.CenterCrop(size),
             video_transforms.ToTensor(),
             normalize
         ])
 
-        test_dataset = self.Dataset(
+        test_dataset = MyDataset(
             self.data,
+            name_list=self.name_list,
             data_folder="test",
             version="1",
             transform=val_transformations
@@ -162,7 +166,7 @@ class Testing(object):
         end_time = time.clock()
         print("Total testing time %.2gs" % (end_time - start_time))
         logger.info("Total testing time %.2gs" % (end_time - start_time))
-        logging.info(
+        logger.info(
             ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f} Loss {loss.avg:.3f}'.format(acc=acc, top5=top5,
                                                                                          loss=losses))
 
@@ -190,5 +194,8 @@ class Testing(object):
         return num_gpus
 
     def transfer_model(self):
-        num_ftrs = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_ftrs, self.num_classes)
+        if self.model_type == 'P3D':
+            num_ftrs = self.model.fc.in_features
+            self.model.fc = nn.Linear(num_ftrs, self.num_classes)
+        elif self.model_type == 'C3D':
+            self.model.fc8 = nn.Linear(4096, self.num_classes)

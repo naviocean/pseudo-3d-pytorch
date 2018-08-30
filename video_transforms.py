@@ -88,17 +88,20 @@ class RandomResizedCrop(object):
 
 
 class Normalize(object):
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, channel=3, num_frames=16, size=160):
         self.mean = mean
         self.std = std
+        self.channel = channel
+        self.num_frames = num_frames
+        self.size = size
 
     def __call__(self, tensor):
         rep_mean = self.mean * (tensor.size()[1])
         rep_std = self.std * (tensor.size()[1])
-        tensor = tensor.contiguous().view(3 * 16, 160, 160)
+        tensor = tensor.contiguous().view(self.channel * self.num_frames, self.size, self.size)
         for t, m, s in zip(tensor, rep_mean, rep_std):
             t.sub_(m).div_(s)
-        tensor = tensor.view(3, 16, 160, 160)
+        tensor = tensor.view(self.channel, self.num_frames, self.size, self.size)
         return tensor
 
 
