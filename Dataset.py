@@ -3,18 +3,14 @@ import os
 import os.path
 import glob
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
+
 
 class MyDataset(Dataset):
-    def __init__(self, root_path, data_folder='train', name_list='ucfTrainTestlist', version=1, transform=None,
-                 num_frames=16, modality='RGB', channel=3, size=160):
+    def __init__(self, root_path, data_folder='train', name_list='ucfTrainTestlist', version=1, transform=None, num_frames=16, modality='RGB'):
         self.root_path = root_path
         self.num_frames = num_frames
         self.data_folder = data_folder
-        self.size = size
-        self.channel = channel
-        self.modality = modality
-
         self.split_file = os.path.join(self.root_path, name_list,
                                        str(data_folder) + 'list0' + str(version) + '.txt')
         self.label_file = os.path.join(self.root_path, name_list, 'classInd.txt')
@@ -59,11 +55,12 @@ class MyDataset(Dataset):
 
     def get_video_tensor(self, dir):
         images = self.get_all_images(dir)
+        # print(dir)
+        # print(len(images))
         seed = np.random.random_integers(0, len(images) - self.num_frames)  # random sampling
         clip = list()
         for i in range(self.num_frames):
             img = Image.open(images[i + seed])
-            # img = img.convert('RGB')
             clip.append(img)
         clip = self.transform(clip)
         return clip
@@ -82,77 +79,3 @@ class MyDataset(Dataset):
 
     def __len__(self):
         return len(self.video_dict)
-
-
-if __name__ == "__main__":
-    from transforms import *
-    import video_transforms
-
-    num_frames = 20
-    channel = 3
-    normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], num_frames=num_frames, channel=channel)
-    transform = Compose([
-        Resize((182, 242)),
-        CenterCrop(160),
-        ToTensor(),
-        normalize,
-    ])
-
-
-    normalize = video_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
-    val_transformations = video_transforms.Compose([
-        video_transforms.Resize((182, 242)),
-        video_transforms.CenterCrop(160),
-        video_transforms.ToTensor(),
-        normalize
-    ])
-
-    train_dataset = MyDataset(
-        root_path='/Users/naviocean/data/UCF101/',
-        data_folder="validation",
-        name_list='ucfTrainTestlist',
-        version="1",
-        transform=transform,
-        num_frames=num_frames
-    )
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=15,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True)
-
-    for i, sample in enumerate(train_loader):
-        inputs = sample[0]
-        labels = sample[1]
-        print(inputs.size())
-        print(labels)
-        if i == 1:
-            break
-    print('xxxx')
-    train_dataset = MyDataset(
-        root_path='/Users/naviocean/data/UCF101/',
-        data_folder="validation",
-        name_list='ucfTrainTestlist',
-        version="1",
-        transform=val_transformations,
-        num_frames=16
-    )
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=15,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True)
-
-    for i, sample in enumerate(train_loader):
-        inputs = sample[0]
-        labels = sample[1]
-        print(inputs.size())
-        print(labels)
-        if i == 1:
-            break
-

@@ -4,3 +4,4 @@ __pycache__
 lib/
 Breakfast/
 UCF101/
+*.pickle

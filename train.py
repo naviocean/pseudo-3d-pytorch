@@ -63,7 +63,6 @@ class Training(object):
     def loading_model(self):
 
         print('Loading %s model' % (self.model_type))
-
         if self.pretrained:
             print("=> using pre-trained model")
             self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
@@ -166,7 +165,7 @@ class Training(object):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.workers,
-            pin_memory=True)
+            pin_memory=False)
 
         return (train_loader, val_loader)
 
