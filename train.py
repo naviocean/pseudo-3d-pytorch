@@ -72,7 +72,7 @@ class Training(object):
         elif self.model_type == 'I3D':
             self.model = I3D(num_classes=101, modality='rgb')
             if self.pretrained:
-                self.model.load_state_dict(torch.load('model_rgb.pth'))
+                self.model.load_state_dict(torch.load('kinetics_i3d_model_rgb.pth'))
         else:
             if self.pretrained:
                 print("=> using pre-trained model")
