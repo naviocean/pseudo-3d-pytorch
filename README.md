@@ -62,7 +62,7 @@ python main.py /path/data/ --test
 Dataset | Accuracy
 ---|---|
 UCF-101 | 81.6%
-MERL Shopping | 80.4%
+MERL Shopping | 82.6%
 
 Reference:
 
