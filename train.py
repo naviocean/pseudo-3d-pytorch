@@ -15,7 +15,8 @@ from logger import Logger
 # from video_transforms import *
 from transforms import *
 from Dataset import MyDataset
-
+from C3D import C3D
+from i3dpt import Unit3Dpy, I3D
 
 class Training(object):
     def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
@@ -57,20 +58,29 @@ class Training(object):
             os.stat('./' + self.data_set)
         except:
             os.mkdir('./' + self.data_set)
-        self.data_folder = './' + self.data_set
+        self.data_folder = './' + self.model_type +'_' + self.data_set
 
     # Loading P3D model
     def loading_model(self):
 
         print('Loading %s model' % (self.model_type))
-        if self.pretrained:
-            print("=> using pre-trained model")
-            self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
 
+        if self.model_type == 'C3D':
+            self.model = C3D()
+            if self.pretrained:
+                self.model.load_state_dict(torch.load('c3d.pickle'))
+        elif self.model_type == 'I3D':
+            self.model = I3D(num_classes=101, modality='rgb')
+            if self.pretrained:
+                self.model.load_state_dict(torch.load('model_rgb.pth'))
         else:
-            print("=> creating model P3D")
-            self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
+            if self.pretrained:
+                print("=> using pre-trained model")
+                self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
 
+            else:
+                print("=> creating model P3D")
+                self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
         # Transfer classes
         self.transfer_model()
 
@@ -120,6 +130,10 @@ class Training(object):
     # Loading data
     def loading_data(self):
         size = 160
+        if self.model_type == 'C3D':
+            size = 112
+        if self.model_type == 'I3D':
+            size = 224
 
         normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         train_transformations = Compose([
@@ -134,6 +148,7 @@ class Training(object):
             ToTensor(),
             normalize
         ])
+
 
         train_dataset = MyDataset(
             self.data,
@@ -355,3 +370,12 @@ class Training(object):
             self.model.fc = nn.Linear(num_ftrs, self.num_classes)
         elif self.model_type == 'C3D':
             self.model.fc8 = nn.Linear(4096, self.num_classes)
+        elif self.model_type == "I3D":
+            conv3d_0c_1x1 = Unit3Dpy(
+                in_channels=1024,
+                out_channels=self.num_classes,
+                kernel_size=(1, 1, 1),
+                activation=None,
+                use_bias=True,
+                use_bn=False)
+            self.model.conv3d_0c_1x1 = conv3d_0c_1x1

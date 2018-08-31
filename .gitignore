@@ -5,3 +5,5 @@ lib/
 Breakfast/
 UCF101/
 *.pickle
+*.pth
+*.tar

@@ -25,11 +25,11 @@
           <entry key="project.open.time.0" value="1" />
           <entry key="project.open.time.1" value="3" />
           <entry key="project.open.time.4" value="2" />
-          <entry key="project.open.time.5" value="2" />
+          <entry key="project.open.time.5" value="5" />
           <entry key="project.open.time.6" value="5" />
           <entry key="project.open.time.7" value="6" />
           <entry key="project.open.time.8" value="3" />
-          <entry key="project.opened" value="22" />
+          <entry key="project.opened" value="25" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -39,7 +39,7 @@
           <entry key="jpg" value="1" />
           <entry key="log" value="5" />
           <entry key="md" value="3" />
-          <entry key="py" value="86" />
+          <entry key="py" value="93" />
           <entry key="txt" value="8" />
           <entry key="vmoptions" value="1" />
         </counts>
@@ -50,7 +50,7 @@
           <entry key="Log" value="5" />
           <entry key="Markdown" value="3" />
           <entry key="PLAIN_TEXT" value="23" />
-          <entry key="Python" value="84" />
+          <entry key="Python" value="91" />
           <entry key="Scratch" value="2" />
         </counts>
       </usages-collector>
@@ -61,7 +61,7 @@
           <entry key="gitignore" value="57" />
           <entry key="gitmodules" value="13" />
           <entry key="md" value="901" />
-          <entry key="py" value="13216" />
+          <entry key="py" value="13655" />
           <entry key="txt" value="1" />
           <entry key="vmoptions" value="4" />
         </counts>
@@ -70,7 +70,7 @@
         <counts>
           <entry key="Markdown" value="901" />
           <entry key="PLAIN_TEXT" value="95" />
-          <entry key="Python" value="13209" />
+          <entry key="Python" value="13648" />
           <entry key="Scratch" value="21" />
         </counts>
       </usages-collector>
@@ -78,11 +78,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="319">
-              <caret line="123" column="111" lean-forward="true" selection-start-line="123" selection-start-column="85" selection-end-line="123" selection-end-column="111" />
+            <state relative-caret-position="554">
+              <caret line="151" lean-forward="true" selection-start-line="151" selection-end-line="151" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -91,10 +91,19 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/transforms.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1515">
+              <caret line="107" column="12" selection-start-line="107" selection-start-column="6" selection-end-line="107" selection-end-column="12" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Dataset.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1155">
-              <caret line="77" column="34" lean-forward="true" selection-start-line="77" selection-start-column="34" selection-end-line="77" selection-end-column="34" />
+            <state relative-caret-position="1080">
+              <caret line="77" column="34" selection-start-line="77" selection-start-column="34" selection-end-line="77" selection-end-column="34" />
               <folding>
                 <element signature="e#0#21#0" expanded="true" />
               </folding>
@@ -105,33 +114,10 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="483">
-              <caret line="99" column="111" selection-start-line="99" selection-start-column="111" selection-end-line="99" selection-end-column="111" />
+            <state relative-caret-position="1230">
+              <caret line="99" column="83" selection-start-line="99" selection-start-column="83" selection-end-line="99" selection-end-column="83" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/transforms.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="479">
-              <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/main.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="15" selection-start-line="15" selection-end-line="15" />
-              <folding>
-                <element signature="e#0#37#0" expanded="true" />
-                <marker date="1535606865763" expanded="true" signature="2056:2057" ph="..." />
-                <marker date="1535606865763" expanded="true" signature="2068:2718" ph="..." />
               </folding>
             </state>
           </provider>
@@ -215,16 +201,18 @@
         <option value="$PROJECT_DIR$/lib/video_transforms/testransforms.py" />
         <option value="$PROJECT_DIR$/lib/video_transforms/videotransforms/tensor_transforms.py" />
         <option value="$PROJECT_DIR$/lib/video_transforms/videotransforms/volume_transforms.py" />
-        <option value="$PROJECT_DIR$/C3D.py" />
         <option value="$PROJECT_DIR$/video_transforms.py" />
         <option value="$APPLICATION_CONFIG_DIR$/pycharm.vmoptions" />
         <option value="$PROJECT_DIR$/.gitmodules" />
-        <option value="$PROJECT_DIR$/main.py" />
-        <option value="$PROJECT_DIR$/train.py" />
         <option value="$PROJECT_DIR$/Dataset.py" />
         <option value="$PROJECT_DIR$/.gitignore" />
-        <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/transforms.py" />
+        <option value="$PROJECT_DIR$/test.py" />
+        <option value="$PROJECT_DIR$/C3D.py" />
+        <option value="$PROJECT_DIR$/i3dpt.py" />
+        <option value="$PROJECT_DIR$/i3d.py" />
+        <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/train.py" />
       </list>
     </option>
   </component>
@@ -235,7 +223,7 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="915" />
+    <option name="x" value="972" />
     <option name="y" value="-1417" />
     <option name="width" value="1570" />
     <option name="height" value="1338" />
@@ -321,10 +309,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="915" y="-1417" width="1570" height="1338" extended-state="0" />
+    <frame x="972" y="-1417" width="1570" height="1338" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2958115" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.30759162" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -337,8 +325,8 @@
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5052356" side_tool="true" visible="true" weight="0.2070626" />
-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4947644" visible="true" weight="0.2070626" />
+      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5052356" side_tool="true" weight="0.2070626" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" sideWeight="0.4947644" visible="true" weight="0.2070626" />
       <window_info anchor="bottom" id="Python Console" order="12" weight="0.32981133" />
       <window_info anchor="bottom" id="Messages" order="13" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -379,8 +367,6 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/AverageMeter.py" />
-    <entry file="file://$PROJECT_DIR$/train2.py" />
     <entry file="file://$PROJECT_DIR$/lib/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
@@ -498,13 +484,6 @@
     <entry file="file://$PROJECT_DIR$/videotransforms/volume_transforms.py" />
     <entry file="file://$PROJECT_DIR$/videotransforms/video_transforms.py" />
     <entry file="file://$PROJECT_DIR$/videotransforms/tensor_transforms.py" />
-    <entry file="file://$PROJECT_DIR$/C3D.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="298">
-          <caret line="69" selection-start-line="69" selection-end-line="74" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/lib/p3d_model.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5685">
@@ -529,14 +508,74 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/pycharm.vmoptions">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="16" column="55" selection-start-line="16" selection-start-column="55" selection-end-line="16" selection-end-column="55" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/i3d.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="911">
+          <caret line="328" column="25" selection-start-line="328" selection-start-column="25" selection-end-line="328" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/i3dpt.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5714">
+          <caret line="433" column="25" selection-start-line="433" selection-start-column="25" selection-end-line="433" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="15" selection-start-line="15" selection-end-line="15" />
+        <state relative-caret-position="495">
+          <caret line="33" column="41" lean-forward="true" selection-start-line="33" selection-start-column="41" selection-end-line="33" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/C3D.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="818">
+          <caret line="69" selection-start-line="69" selection-end-line="74" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="554">
+          <caret line="151" lean-forward="true" selection-start-line="151" selection-end-line="151" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
-            <marker date="1535606865763" expanded="true" signature="2056:2057" ph="..." />
-            <marker date="1535606865763" expanded="true" signature="2068:2718" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/transforms.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1515">
+          <caret line="107" column="12" selection-start-line="107" selection-start-column="6" selection-end-line="107" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Dataset.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1080">
+          <caret line="77" column="34" selection-start-line="77" selection-start-column="34" selection-end-line="77" selection-end-column="34" />
+          <folding>
+            <element signature="e#0#21#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1230">
+          <caret line="99" column="83" selection-start-line="99" selection-start-column="83" selection-end-line="99" selection-end-column="83" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -548,50 +587,6 @@
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_CONFIG_DIR$/pycharm.vmoptions">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" column="55" selection-start-line="16" selection-start-column="55" selection-end-line="16" selection-end-column="55" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Dataset.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1155">
-          <caret line="77" column="34" lean-forward="true" selection-start-line="77" selection-start-column="34" selection-end-line="77" selection-end-column="34" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="319">
-          <caret line="123" column="111" lean-forward="true" selection-start-line="123" selection-start-column="85" selection-end-line="123" selection-end-column="111" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="483">
-          <caret line="99" column="111" selection-start-line="99" selection-start-column="111" selection-end-line="99" selection-end-column="111" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/transforms.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="479">
-          <caret line="81" lean-forward="true" selection-start-line="81" selection-end-line="81" />
         </state>
       </provider>
     </entry>
