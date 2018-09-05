@@ -1,4 +1,0 @@
-[submodule "lib"]
-	path = lib
-	url = https://github.com/qijiezhao/pseudo-3d-pytorch.git
-	branch = master

@@ -3,20 +3,21 @@ import os
 import os.path
 import shutil
 import time
-import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data as data
 from meter import AverageMeter
-from lib.p3d_model import P3D199, get_optim_policies
 from logger import Logger
 # from video_transforms import *
 from transforms import *
 from Dataset import MyDataset
-from C3D import C3D
-from i3dpt import Unit3Dpy, I3D
+from models.p3d_model import P3D199, get_optim_policies
+from models.C3D import C3D
+from models.i3dpt import I3D
+from utils import check_gpu, transfer_model, accuracy
+
 
 class Training(object):
     def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
@@ -49,16 +50,18 @@ class Training(object):
         if self.count_early_stop > self.early_stop:
             print('Early stop')
             end_time = time.time()
-            print("--- Total training time %s seconds ---" % (end_time - start_time))
-            logger.info("--- Total training time %s seconds ---" % (end_time - start_time))
+            print("--- Total training time %s seconds ---" %
+                  (end_time - start_time))
+            logger.info("--- Total training time %s seconds ---" %
+                        (end_time - start_time))
             exit()
 
     def checkDataFolder(self):
         try:
-            os.stat('./' + self.data_set)
+            os.stat('./' + self.model_type + '_' + self.data_set)
         except:
-            os.mkdir('./' + self.data_set)
-        self.data_folder = './' + self.model_type +'_' + self.data_set
+            os.mkdir('./' + self.model_type + '_' + self.data_set)
+        self.data_folder = './' + self.model_type + '_' + self.data_set
 
     # Loading P3D model
     def loading_model(self):
@@ -70,34 +73,37 @@ class Training(object):
             if self.pretrained:
                 self.model.load_state_dict(torch.load('c3d.pickle'))
         elif self.model_type == 'I3D':
-            self.model = I3D(num_classes=101, modality='rgb')
+            self.model = I3D(num_classes=400, modality='rgb')
             if self.pretrained:
-                self.model.load_state_dict(torch.load('kinetics_i3d_model_rgb.pth'))
+                self.model.load_state_dict(
+                    torch.load('kinetics_i3d_model_rgb.pth'))
         else:
             if self.pretrained:
                 print("=> using pre-trained model")
-                self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
+                self.model = P3D199(
+                    pretrained=True, num_classes=400, dropout=self.dropout)
 
             else:
                 print("=> creating model P3D")
-                self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
+                self.model = P3D199(
+                    pretrained=False, num_classes=400, dropout=self.dropout)
         # Transfer classes
-        self.transfer_model()
+        self.model = transfer_model(model=self.model, model_type=self.model_type, num_classes=self.num_classes)
 
         # Check gpu and run parallel
-        if self.check_gpu() > 0:
+        if check_gpu() > 0:
             self.model = torch.nn.DataParallel(self.model).cuda()
 
         # define loss function (criterion) and optimizer
-        if self.check_gpu() > 0:
-            self.criterion = nn.CrossEntropyLoss().cuda()
-        else:
-            self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss()
 
-        policies = get_optim_policies(model=self.model, modality=self.modality, enable_pbn=True)
+        if check_gpu() > 0:
+            self.criterion = nn.CrossEntropyLoss().cuda()
+
+        policies = get_optim_policies(
+                model=self.model, modality=self.modality, enable_pbn=True)
 
         self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
-
 
         # optionally resume from a checkpoint
         if self.resume:
@@ -108,12 +114,14 @@ class Training(object):
                 self.best_prec1 = checkpoint['best_prec1']
                 self.model.load_state_dict(checkpoint['state_dict'])
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
-                print("=> loaded checkpoint '{}' (epoch {})".format(self.evaluate, checkpoint['epoch']))
+                print("=> loaded checkpoint '{}' (epoch {})".format(
+                    self.evaluate, checkpoint['epoch']))
             else:
                 print("=> no checkpoint found at '{}'".format(self.resume))
 
         if self.evaluate:
-            file_model_best = os.path.join(self.data_folder, 'model_best.pth.tar')
+            file_model_best = os.path.join(
+                self.data_folder, 'model_best.pth.tar')
             if os.path.isfile(file_model_best):
                 print("=> loading checkpoint '{}'".format('model_best.pth.tar'))
                 checkpoint = torch.load(file_model_best)
@@ -121,7 +129,8 @@ class Training(object):
                 self.best_prec1 = checkpoint['best_prec1']
                 self.model.load_state_dict(checkpoint['state_dict'])
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
-                print("=> loaded checkpoint '{}' (epoch {})".format(self.evaluate, checkpoint['epoch']))
+                print("=> loaded checkpoint '{}' (epoch {})".format(
+                    self.evaluate, checkpoint['epoch']))
             else:
                 print("=> no checkpoint found at '{}'".format(self.resume))
 
@@ -135,20 +144,27 @@ class Training(object):
         if self.model_type == 'I3D':
             size = 224
 
-        normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[
+            0.229, 0.224, 0.225])
         train_transformations = Compose([
             RandomSizedCrop(size),
             RandomHorizontalFlip(),
+            # Resize((size, size)),
+            # ColorJitter(
+            #     brightness=0.4,
+            #     contrast=0.4,
+            #     saturation=0.4,
+            # ),
             ToTensor(),
             normalize])
 
         val_transformations = Compose([
-            Resize((182, 242)),
-            CenterCrop(size),
+            # Resize((182, 242)),
+            Resize((size, size)),
+            # CenterCrop(size),
             ToTensor(),
             normalize
         ])
-
 
         train_dataset = MyDataset(
             self.data,
@@ -185,7 +201,7 @@ class Training(object):
         return (train_loader, val_loader)
 
     def processing(self):
-        log_file = os.path.join(self.data_folder, 'train.log');
+        log_file = os.path.join(self.data_folder, 'train.log')
 
         logger = Logger('train', log_file)
 
@@ -193,11 +209,14 @@ class Training(object):
             self.validate(logger)
             return
 
+        iter_per_epoch = len(self.train_loader)
+        logger.info('Iterations per epoch: {0}'.format(iter_per_epoch))
+        print('Iterations per epoch: {0}'.format(iter_per_epoch))
+
         start_time = time.time()
 
         for epoch in range(self.start_epoch, self.epochs):
             self.adjust_learning_rate(epoch)
-
             # train for one epoch
             self.train(logger, epoch)
 
@@ -217,8 +236,10 @@ class Training(object):
             self.check_early_stop(prec1, logger, start_time)
 
         end_time = time.time()
-        print("--- Total training time %s seconds ---" % (end_time - start_time))
-        logger.info("--- Total training time %s seconds ---" % (end_time - start_time))
+        print("--- Total training time %s seconds ---" %
+              (end_time - start_time))
+        logger.info("--- Total training time %s seconds ---" %
+                    (end_time - start_time))
 
     # Training
     def train(self, logger, epoch):
@@ -228,6 +249,9 @@ class Training(object):
         acc = AverageMeter()
         top1 = AverageMeter()
         top5 = AverageMeter()
+
+
+
         # switch to train mode
         self.model.train()
 
@@ -235,24 +259,25 @@ class Training(object):
         for i, (images, target) in enumerate(self.train_loader):
             # measure data loading time
             data_time.update(time.time() - end)
-            if self.check_gpu() > 0:
+            if check_gpu() > 0:
                 images = images.cuda(async=True)
                 target = target.cuda(async=True)
             image_var = torch.autograd.Variable(images)
             label_var = torch.autograd.Variable(target)
 
+            self.optimizer.zero_grad()
+
             # compute y_pred
             y_pred = self.model(image_var)
             loss = self.criterion(y_pred, label_var)
-
             # measure accuracy and record loss
-            prec1, prec5 = self.accuracy(y_pred.data, target, topk=(1, 5))
+            prec1, prec5 = accuracy(y_pred.data, target, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
             acc.update(prec1.item(), images.size(0))
             top1.update(prec1.item(), images.size(0))
             top5.update(prec5.item(), images.size(0))
             # compute gradient and do SGD step
-            self.optimizer.zero_grad()
+
             loss.backward()
             self.optimizer.step()
 
@@ -291,7 +316,7 @@ class Training(object):
 
         end = time.time()
         for i, (images, labels) in enumerate(self.val_loader):
-            if self.check_gpu() > 0:
+            if check_gpu() > 0:
                 images = images.cuda(async=True)
                 labels = labels.cuda(async=True)
 
@@ -303,7 +328,7 @@ class Training(object):
             loss = self.criterion(y_pred, label_var)
 
             # measure accuracy and record loss
-            prec1, prec5 = self.accuracy(y_pred.data, labels, topk=(1, 5))
+            prec1, prec5 = accuracy(y_pred.data, labels, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
             acc.update(prec1.item(), images.size(0))
             top1.update(prec1.item(), images.size(0))
@@ -320,8 +345,10 @@ class Training(object):
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
                     i, len(self.val_loader), batch_time=batch_time, loss=losses, top1=top1, top5=top5))
 
-        print(' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
-        logger.info(' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
+        print(
+            ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
+        logger.info(
+            ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
 
         return acc.avg
 
@@ -339,43 +366,5 @@ class Training(object):
         lr = self.lr * (0.1 ** (epoch // 30))
         for param_group in self.optimizer.state_dict()['param_groups']:
             param_group['lr'] = lr * param_group['lr_mult']
-            param_group['weight_decay'] = self.weight_decay * param_group['decay_mult']
-
-    # get accuracy from y pred
-    def accuracy(self, y_pred, y_actual, topk=(1,)):
-        """Computes the precision@k for the specified values of k"""
-        maxk = max(topk)
-        batch_size = y_actual.size(0)
-
-        _, pred = y_pred.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(y_actual.view(1, -1).expand_as(pred))
-
-        res = []
-        for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0)
-            res.append(correct_k.mul_(100.0 / batch_size))
-
-        return res
-
-    def check_gpu(self):
-        num_gpus = 0
-        if torch.cuda.is_available():
-            num_gpus = torch.cuda.device_count()
-        return num_gpus
-
-    def transfer_model(self):
-        if self.model_type == 'P3D':
-            num_ftrs = self.model.fc.in_features
-            self.model.fc = nn.Linear(num_ftrs, self.num_classes)
-        elif self.model_type == 'C3D':
-            self.model.fc8 = nn.Linear(4096, self.num_classes)
-        elif self.model_type == "I3D":
-            conv3d_0c_1x1 = Unit3Dpy(
-                in_channels=1024,
-                out_channels=self.num_classes,
-                kernel_size=(1, 1, 1),
-                activation=None,
-                use_bias=True,
-                use_bn=False)
-            self.model.conv3d_0c_1x1 = conv3d_0c_1x1
+            param_group['weight_decay'] = self.weight_decay * \
+                                          param_group['decay_mult']

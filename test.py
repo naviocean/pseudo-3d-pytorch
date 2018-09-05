@@ -2,21 +2,21 @@ from __future__ import print_function
 import os
 import os.path
 import time
-import torchvision
-import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data as data
 from meter import AverageMeter
-from lib.p3d_model import P3D199, get_optim_policies
+
 from logger import Logger
-# import video_transforms
 # from video_transforms import *
 from transforms import *
 from Dataset import MyDataset
-
+from models.p3d_model import P3D199, get_optim_policies
+from models.C3D import C3D
+from models.i3dpt import I3D
+from utils import check_gpu, transfer_model, accuracy
 
 class Testing(object):
     def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
@@ -42,33 +42,32 @@ class Testing(object):
 
     def checkDataFolder(self):
         try:
-            os.stat('./' + self.data_set)
+            os.stat('./' + self.model_type + '_' + self.data_set)
         except:
-            os.mkdir('./' + self.data_set)
-
-        self.data_folder = './' + self.data_set
+            os.mkdir('./' + self.model_type + '_' + self.data_set)
+        self.data_folder = './' + self.model_type + '_' + self.data_set
 
     # Loading P3D model
     def loading_model(self):
-        # Loading P3D model
 
-        if self.pretrained:
-            print("=> using pre-trained model")
-            self.model = P3D199(pretrained=True, num_classes=400, dropout=self.dropout)
-
+        print('Loading %s model' % (self.model_type))
+        if self.model_type == 'C3D':
+            self.model = C3D()
+        elif self.model_type == 'I3D':
+            self.model = I3D(num_classes=400, modality='rgb')
         else:
-            print("=> creating model P3D")
             self.model = P3D199(pretrained=False, num_classes=400, dropout=self.dropout)
 
+
         # Transfer classes
-        self.transfer_model()
+        self.model = transfer_model(model=self.model, model_type=self.model_type, num_classes=self.num_classes)
 
         # Check gpu and run parallel
-        if self.check_gpu() > 0:
+        if check_gpu() > 0:
             self.model = torch.nn.DataParallel(self.model).cuda()
 
         # define loss function (criterion) and optimizer
-        if self.check_gpu() > 0:
+        if check_gpu() > 0:
             self.criterion = nn.CrossEntropyLoss().cuda()
         else:
             self.criterion = nn.CrossEntropyLoss()
@@ -96,7 +95,10 @@ class Testing(object):
     # Loading data
     def loading_data(self):
         size = 160
-
+        if self.model_type == 'C3D':
+            size = 112
+        if self.model_type == 'I3D':
+            size = 224
         normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         val_transformations = Compose([
@@ -117,9 +119,9 @@ class Testing(object):
 
         test_loader = data.DataLoader(
             test_dataset,
-            batch_size=1,
+            batch_size=self.batch_size,
             shuffle=False,
-            num_workers=1,
+            num_workers=self.workers,
             pin_memory=False)
 
         return test_loader
@@ -138,7 +140,7 @@ class Testing(object):
         start_time = time.clock()
         print("Begin testing")
         for i, (images, labels) in enumerate(self.test_loader):
-            if self.check_gpu() > 0:
+            if check_gpu() > 0:
                 images = images.cuda(async=True)
                 labels = labels.cuda(async=True)
 
@@ -150,7 +152,7 @@ class Testing(object):
             loss = self.criterion(y_pred, label_var)
 
             # measure accuracy and record loss
-            prec1, prec5 = self.accuracy(y_pred.data, labels, topk=(1, 5))
+            prec1, prec5 = accuracy(y_pred.data, labels, topk=(1, 5))
             losses.update(loss.item(), images.size(0))
             acc.update(prec1.item(), images.size(0))
             top1.update(prec1.item(), images.size(0))
@@ -174,32 +176,6 @@ class Testing(object):
             ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f} Loss {loss.avg:.3f}'.format(acc=acc, top5=top5,
                                                                                          loss=losses))
 
-    # get accuracy from y pred
-    def accuracy(self, y_pred, y_actual, topk=(1,)):
-        """Computes the precision@k for the specified values of k"""
-        maxk = max(topk)
-        batch_size = y_actual.size(0)
 
-        _, pred = y_pred.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(y_actual.view(1, -1).expand_as(pred))
 
-        res = []
-        for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0)
-            res.append(correct_k.mul_(100.0 / batch_size))
 
-        return res
-
-    def check_gpu(self):
-        num_gpus = 0
-        if torch.cuda.is_available():
-            num_gpus = torch.cuda.device_count()
-        return num_gpus
-
-    def transfer_model(self):
-        if self.model_type == 'P3D':
-            num_ftrs = self.model.fc.in_features
-            self.model.fc = nn.Linear(num_ftrs, self.num_classes)
-        elif self.model_type == 'C3D':
-            self.model.fc8 = nn.Linear(4096, self.num_classes)

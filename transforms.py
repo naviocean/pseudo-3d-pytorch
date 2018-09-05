@@ -20,6 +20,13 @@ class Compose(object):
             clip = t(clip)
         return clip
 
+class ColorJitter(object):
+    def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
+        self.worker = torchvision.transforms.ColorJitter(brightness, contrast, saturation, hue)
+
+    def __call__(self, img_group):
+        return [self.worker(img) for img in img_group]
+
 
 class RandomCrop(object):
     def __init__(self, size):
