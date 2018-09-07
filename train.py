@@ -231,9 +231,9 @@ class Training(object):
             #log visualize
             info_acc = {'train_acc': train_acc.avg, 'val_acc': val_acc.avg}
             info_loss = {'train_loss': train_losses.avg, 'val_loss': val_losses.avg}
-            self.visualizer.write_summary(info_acc, info_loss, epoch)
+            self.visualizer.write_summary(info_acc, info_loss, epoch+1)
 
-            self.visualizer.write_histogram(model=self.model, epoch=epoch)
+            self.visualizer.write_histogram(model=self.model, step=epoch+1)
 
             # remember best Accuracy and save checkpoint
             is_best = val_acc.avg > self.best_prec1
