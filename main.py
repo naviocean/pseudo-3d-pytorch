@@ -22,6 +22,7 @@ parser.add_argument('--test', dest='test', action='store_true', help='evaluate m
 parser.add_argument('--pretrained', dest='pretrained', action='store_true', help='use pre-trained model')
 parser.add_argument("--model-type", default="P3D", choices=["P3D", "C3D", "I3D"], help="which model to run the code")
 parser.add_argument('--num-frames', default=16, type=int, metavar='N', help='number frames per clip')
+parser.add_argument('--log-visualize', default='./runs', type=str, metavar='PATH', help='tensorboard log')
 
 def main():
     args = parser.parse_args()

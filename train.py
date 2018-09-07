@@ -17,7 +17,7 @@ from models.p3d_model import P3D199, get_optim_policies
 from models.C3D import C3D
 from models.i3dpt import I3D
 from utils import check_gpu, transfer_model, accuracy
-
+from visualize import Visualizer
 
 class Training(object):
     def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
@@ -32,6 +32,9 @@ class Training(object):
         # init start epoch = 0
         self.start_epoch = 0
 
+        if self.log_visualize != '':
+            self.visualizer = Visualizer(logdir=self.log_visualize)
+
         self.checkDataFolder()
 
         self.loading_model()
@@ -40,6 +43,7 @@ class Training(object):
 
         # run
         self.processing()
+
 
     def check_early_stop(self, accuracy, logger, start_time):
         if self.best_prec1 <= accuracy:
@@ -200,6 +204,7 @@ class Training(object):
 
         return (train_loader, val_loader)
 
+
     def processing(self):
         log_file = os.path.join(self.data_folder, 'train.log')
 
@@ -218,14 +223,21 @@ class Training(object):
         for epoch in range(self.start_epoch, self.epochs):
             self.adjust_learning_rate(epoch)
             # train for one epoch
-            self.train(logger, epoch)
+            train_losses, train_acc = self.train(logger, epoch)
 
             # evaluate on validation set
-            prec1 = self.validate(logger)
+            val_losses, val_acc = self.validate(logger)
+
+            #log visualize
+            info_acc = {'train_acc': train_acc.avg, 'val_acc': val_acc.avg}
+            info_loss = {'train_loss': train_losses.avg, 'val_loss': val_losses.avg}
+            self.visualizer.write_summary(info_acc, info_loss, epoch)
+
+            self.visualizer.write_histogram(model=self.model, epoch=epoch)
 
             # remember best Accuracy and save checkpoint
-            is_best = prec1 > self.best_prec1
-            self.best_prec1 = max(prec1, self.best_prec1)
+            is_best = val_acc.avg > self.best_prec1
+            self.best_prec1 = max(val_acc.avg, self.best_prec1)
             self.save_checkpoint({
                 'epoch': epoch + 1,
                 'state_dict': self.model.state_dict(),
@@ -233,13 +245,14 @@ class Training(object):
                 'optimizer': self.optimizer.state_dict(),
             }, is_best)
 
-            self.check_early_stop(prec1, logger, start_time)
+            self.check_early_stop(val_acc.avg, logger, start_time)
 
         end_time = time.time()
         print("--- Total training time %s seconds ---" %
               (end_time - start_time))
         logger.info("--- Total training time %s seconds ---" %
                     (end_time - start_time))
+        self.visualizer.writer_close()
 
     # Training
     def train(self, logger, epoch):
@@ -303,6 +316,7 @@ class Training(object):
                     'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, batch_time=batch_time,
                                                                     data_time=data_time, loss=losses, top1=top1,
                                                                     top5=top5))
+        return losses, acc
 
     # Validation
     def validate(self, logger):
@@ -346,11 +360,11 @@ class Training(object):
                     i, len(self.val_loader), batch_time=batch_time, loss=losses, top1=top1, top5=top5))
 
         print(
-            ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
+            ' * Accuracy {acc.avg:.3f}  Loss {loss.avg:.3f}'.format(acc=acc, loss=losses))
         logger.info(
-            ' * Accuracy {acc.avg:.3f}  Acc@5 {top5.avg:.3f}'.format(acc=acc, top5=top5))
+            ' * Accuracy {acc.avg:.3f}  Loss {loss.avg:.3f}'.format(acc=acc, loss=losses))
 
-        return acc.avg
+        return losses, acc
 
     # save checkpoint to file
     def save_checkpoint(self, state, is_best):
@@ -362,8 +376,8 @@ class Training(object):
 
     # adjust learning rate for each epoch
     def adjust_learning_rate(self, epoch):
-        """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-        lr = self.lr * (0.1 ** (epoch // 30))
+        """Sets the learning rate to the initial LR decayed by 10 every 15 epochs"""
+        lr = self.lr * (0.1 ** (epoch // 15))
         for param_group in self.optimizer.state_dict()['param_groups']:
             param_group['lr'] = lr * param_group['lr_mult']
             param_group['weight_decay'] = self.weight_decay * \
