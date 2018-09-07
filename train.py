@@ -376,8 +376,10 @@ class Training(object):
 
     # adjust learning rate for each epoch
     def adjust_learning_rate(self, epoch):
-        """Sets the learning rate to the initial LR decayed by 10 every 15 epochs"""
-        lr = self.lr * (0.1 ** (epoch // 15))
+        """Sets the learning rate to the initial LR decayed by 10 every 3K iterations"""
+        iters = len(self.train_loader)
+        num_epochs = 3000//iters
+        lr = self.lr * (0.1 ** (epoch // num_epochs))
         for param_group in self.optimizer.state_dict()['param_groups']:
             param_group['lr'] = lr * param_group['lr_mult']
             param_group['weight_decay'] = self.weight_decay * \
