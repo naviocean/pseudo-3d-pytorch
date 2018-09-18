@@ -44,3 +44,10 @@ def transfer_model(model, model_type='P3D', num_classes=101):
             use_bn=False)
         model.conv3d_0c_1x1 = conv3d_0c_1x1
     return model
+
+
+def get_learning_rate(optimizer):
+    lr = []
+    for param_group in optimizer.param_groups:
+        lr += [param_group['lr']]
+    return lr

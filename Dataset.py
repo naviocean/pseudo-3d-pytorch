@@ -4,13 +4,14 @@ import os.path
 import glob
 import numpy as np
 from torch.utils.data import Dataset
-
+import random
 
 class MyDataset(Dataset):
-    def __init__(self, root_path, data_folder='train', name_list='ucfTrainTestlist', version=1, transform=None, num_frames=16, modality='RGB'):
+    def __init__(self, root_path, data_folder='train', name_list='ucfTrainTestlist', version=1, transform=None, num_frames=16, modality='RGB', random=False):
         self.root_path = root_path
         self.num_frames = num_frames
         self.data_folder = data_folder
+        self.random = random
         self.split_file = os.path.join(self.root_path, name_list,
                                        str(data_folder) + 'list0' + str(version) + '.txt')
         self.label_file = os.path.join(self.root_path, name_list, 'classInd.txt')
@@ -59,9 +60,17 @@ class MyDataset(Dataset):
         # print(len(images))
         seed = np.random.random_integers(0, len(images) - self.num_frames)  # random sampling
         clip = list()
-        for i in range(self.num_frames):
-            img = Image.open(images[i + seed])
-            clip.append(img)
+        if self.random:
+            orders = list(range(len(images)))
+            random_picked = random.sample(orders, self.num_frames)
+            for i in range(self.num_frames):
+                idx = random_picked[i]
+                img = Image.open(images[idx])
+                clip.append(img)
+        else:
+            for i in range(self.num_frames):
+                img = Image.open(images[i + seed])
+                clip.append(img)
         clip = self.transform(clip)
         return clip
 

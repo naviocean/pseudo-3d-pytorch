@@ -16,7 +16,7 @@ from Dataset import MyDataset
 from models.p3d_model import P3D199, get_optim_policies
 from models.C3D import C3D
 from models.i3dpt import I3D
-from utils import check_gpu, transfer_model, accuracy
+from utils import check_gpu, transfer_model, accuracy, get_learning_rate
 from visualize import Visualizer
 
 class Training(object):
@@ -43,7 +43,8 @@ class Training(object):
 
         # run
         self.processing()
-
+        if self.random:
+            print('random pick images')
 
     def check_early_stop(self, accuracy, logger, start_time):
         if self.best_prec1 <= accuracy:
@@ -142,6 +143,7 @@ class Training(object):
 
     # Loading data
     def loading_data(self):
+        random = True if self.random else False
         size = 160
         if self.model_type == 'C3D':
             size = 112
@@ -176,7 +178,8 @@ class Training(object):
             name_list=self.name_list,
             version="1",
             transform=train_transformations,
-            num_frames=self.num_frames
+            num_frames=self.num_frames,
+            random=random
         )
 
         val_dataset = MyDataset(
@@ -185,7 +188,8 @@ class Training(object):
             name_list=self.name_list,
             version="1",
             transform=val_transformations,
-            num_frames=self.num_frames
+            num_frames=self.num_frames,
+            random=random
         )
 
         train_loader = data.DataLoader(
@@ -263,8 +267,7 @@ class Training(object):
         top1 = AverageMeter()
         top5 = AverageMeter()
 
-
-
+        rate = get_learning_rate(self.optimizer)[0]
         # switch to train mode
         self.model.train()
 
@@ -302,19 +305,21 @@ class Training(object):
                 print('Epoch: [{0}/{1}][{2}/{3}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                      'Lr {rate:.5f}\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, i, len(self.train_loader),
-                                                                      batch_time=batch_time, data_time=data_time,
+                                                                      batch_time=batch_time, data_time=data_time, rate=rate,
                                                                       loss=losses, top1=top1, top5=top5))
 
         logger.info('Epoch: [{0}/{1}]\t'
                     'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                     'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                    'Lr {rate:.5f}\t'
                     'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                     'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                     'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, batch_time=batch_time,
-                                                                    data_time=data_time, loss=losses, top1=top1,
+                                                                    data_time=data_time, rate=rate, loss=losses, top1=top1,
                                                                     top5=top5))
         return losses, acc
 
@@ -380,7 +385,7 @@ class Training(object):
         iters = len(self.train_loader)
         num_epochs = 3000//iters
         lr = self.lr * (0.1 ** (epoch // num_epochs))
-        for param_group in self.optimizer.state_dict()['param_groups']:
+        for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr * param_group['lr_mult']
             param_group['weight_decay'] = self.weight_decay * \
                                           param_group['decay_mult']

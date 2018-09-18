@@ -19,8 +19,9 @@ parser.add_argument('--print-freq', default=1, type=int, metavar='N', help='prin
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint')
 parser.add_argument('--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
 parser.add_argument('--test', dest='test', action='store_true', help='evaluate model on test set')
+parser.add_argument('--random', dest='random', action='store_true', help='random pick image')
 parser.add_argument('--pretrained', dest='pretrained', action='store_true', help='use pre-trained model')
-parser.add_argument("--model-type", default="P3D", choices=["P3D", "C3D", "I3D"], help="which model to run the code")
+parser.add_argument('--model-type', default='P3D', choices=['P3D', 'C3D', 'I3D'], help='which model to run the code')
 parser.add_argument('--num-frames', default=16, type=int, metavar='N', help='number frames per clip')
 parser.add_argument('--log-visualize', default='./runs', type=str, metavar='PATH', help='tensorboard log')
 
