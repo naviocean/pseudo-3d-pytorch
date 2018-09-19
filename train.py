@@ -18,7 +18,7 @@ from models.C3D import C3D
 from models.i3dpt import I3D
 from utils import check_gpu, transfer_model, accuracy, get_learning_rate
 from visualize import Visualizer
-
+from lr_scheduler import CyclicLR
 
 class Training(object):
     def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
@@ -113,7 +113,7 @@ class Training(object):
 
         self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
 
-        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer, mode='min', patience=10, verbose=True)
+        # self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer, mode='min', patience=10, verbose=True)
 
         # optionally resume from a checkpoint
         if self.resume:
@@ -171,8 +171,8 @@ class Training(object):
 
         val_transformations = Compose([
             # Resize((182, 242)),
-            Resize((size, size)),
-            # CenterCrop(size),
+            Resize(256),
+            CenterCrop(size),
             ToTensor(),
             normalize
         ])
@@ -217,6 +217,10 @@ class Training(object):
         log_file = os.path.join(self.data_folder, 'train.log')
 
         logger = Logger('train', log_file)
+
+        iters = len(self.train_loader)
+        step_size = iters * 2
+        self.scheduler = CyclicLR(optimizer=self.optimizer, step_size=step_size, base_lr=self.lr)
 
         if self.evaluate:
             self.validate(logger)
@@ -280,6 +284,9 @@ class Training(object):
 
         end = time.time()
         for i, (images, target) in enumerate(self.train_loader):
+            # adjust learning rate scheduler step
+            self.scheduler.batch_step()
+
             # measure data loading time
             data_time.update(time.time() - end)
             if check_gpu() > 0:
@@ -356,6 +363,9 @@ class Training(object):
 
             # compute y_pred
             y_pred = self.model(image_var)
+            if self.model_type == 'I3D':
+                y_pred = y_pred[0]
+
             loss = self.criterion(y_pred, label_var)
 
             # measure accuracy and record loss
