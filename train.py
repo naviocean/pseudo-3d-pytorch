@@ -108,10 +108,11 @@ class Training(object):
         if check_gpu() > 0:
             self.criterion = nn.CrossEntropyLoss().cuda()
 
-        policies = get_optim_policies(
-            model=self.model, modality=self.modality, enable_pbn=True)
+        params = self.model.parameters()
+        if self.model_type == 'P3D':
+            params = get_optim_policies( model=self.model, modality=self.modality, enable_pbn=True)
 
-        self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
+        self.optimizer = optim.SGD(params=params, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
 
         # self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer, mode='min', patience=10, verbose=True)
 
