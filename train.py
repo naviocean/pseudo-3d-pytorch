@@ -19,6 +19,7 @@ from models.i3dpt import I3D
 from utils import check_gpu, transfer_model, accuracy, get_learning_rate
 from visualize import Visualizer
 
+
 class Training(object):
     def __init__(self, name_list, num_classes=400, modality='RGB', **kwargs):
         self.__dict__.update(kwargs)
@@ -78,10 +79,12 @@ class Training(object):
             if self.pretrained:
                 self.model.load_state_dict(torch.load('c3d.pickle'))
         elif self.model_type == 'I3D':
-            self.model = I3D(num_classes=400, modality='rgb')
             if self.pretrained:
+                self.model = I3D(num_classes=400, modality='rgb')
                 self.model.load_state_dict(
                     torch.load('kinetics_i3d_model_rgb.pth'))
+            else:
+                self.model = I3D(num_classes=self.num_classes, modality='rgb')
         else:
             if self.pretrained:
                 print("=> using pre-trained model")
@@ -106,9 +109,11 @@ class Training(object):
             self.criterion = nn.CrossEntropyLoss().cuda()
 
         policies = get_optim_policies(
-                model=self.model, modality=self.modality, enable_pbn=True)
+            model=self.model, modality=self.modality, enable_pbn=True)
 
         self.optimizer = optim.SGD(policies, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
+
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=self.optimizer, mode='min', patience=10, verbose=True)
 
         # optionally resume from a checkpoint
         if self.resume:
@@ -208,7 +213,6 @@ class Training(object):
 
         return (train_loader, val_loader)
 
-
     def processing(self):
         log_file = os.path.join(self.data_folder, 'train.log')
 
@@ -225,19 +229,22 @@ class Training(object):
         start_time = time.time()
 
         for epoch in range(self.start_epoch, self.epochs):
-            self.adjust_learning_rate(epoch)
+            # self.adjust_learning_rate(epoch)
+
             # train for one epoch
             train_losses, train_acc = self.train(logger, epoch)
 
             # evaluate on validation set
-            val_losses, val_acc = self.validate(logger)
+            with torch.no_grad():
+                val_losses, val_acc = self.validate(logger)
 
-            #log visualize
+            self.scheduler.step(val_losses.avg)
+            # log visualize
             info_acc = {'train_acc': train_acc.avg, 'val_acc': val_acc.avg}
             info_loss = {'train_loss': train_losses.avg, 'val_loss': val_losses.avg}
-            self.visualizer.write_summary(info_acc, info_loss, epoch+1)
+            self.visualizer.write_summary(info_acc, info_loss, epoch + 1)
 
-            self.visualizer.write_histogram(model=self.model, step=epoch+1)
+            self.visualizer.write_histogram(model=self.model, step=epoch + 1)
 
             # remember best Accuracy and save checkpoint
             is_best = val_acc.avg > self.best_prec1
@@ -285,6 +292,9 @@ class Training(object):
 
             # compute y_pred
             y_pred = self.model(image_var)
+            if self.model_type == 'I3D':
+                y_pred = y_pred[0]
+
             loss = self.criterion(y_pred, label_var)
             # measure accuracy and record loss
             prec1, prec5 = accuracy(y_pred.data, target, topk=(1, 5))
@@ -309,7 +319,8 @@ class Training(object):
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, i, len(self.train_loader),
-                                                                      batch_time=batch_time, data_time=data_time, rate=rate,
+                                                                      batch_time=batch_time, data_time=data_time,
+                                                                      rate=rate,
                                                                       loss=losses, top1=top1, top5=top5))
 
         logger.info('Epoch: [{0}/{1}]\t'
@@ -319,7 +330,8 @@ class Training(object):
                     'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                     'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                     'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, self.epochs, batch_time=batch_time,
-                                                                    data_time=data_time, rate=rate, loss=losses, top1=top1,
+                                                                    data_time=data_time, rate=rate, loss=losses,
+                                                                    top1=top1,
                                                                     top5=top5))
         return losses, acc
 
@@ -383,9 +395,9 @@ class Training(object):
     def adjust_learning_rate(self, epoch):
         """Sets the learning rate to the initial LR decayed by 10 every 3K iterations"""
         iters = len(self.train_loader)
-        num_epochs = 3000//iters
-        lr = self.lr * (0.1 ** (epoch // num_epochs))
+        num_epochs = 3000 // iters
+        decay = 0.1 ** (epoch // num_epochs)
+        lr = self.lr * decay
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr * param_group['lr_mult']
-            param_group['weight_decay'] = self.weight_decay * \
-                                          param_group['decay_mult']
+            param_group['weight_decay'] = decay * param_group['decay_mult']
