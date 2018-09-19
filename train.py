@@ -243,7 +243,7 @@ class Training(object):
             with torch.no_grad():
                 val_losses, val_acc = self.validate(logger)
 
-            self.scheduler.step(val_losses.avg)
+            # self.scheduler.step(val_losses.avg)
             # log visualize
             info_acc = {'train_acc': train_acc.avg, 'val_acc': val_acc.avg}
             info_loss = {'train_loss': train_losses.avg, 'val_loss': val_losses.avg}
