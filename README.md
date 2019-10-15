@@ -14,11 +14,11 @@ This repo implements the network structure of P3D[1] with PyTorch, pre-trained m
 
 1, P3D-199 trained on Kinetics dataset:
 
- [Google Drive url](https://drive.google.com/open?id=1hQ_2zfJTs5cYp9nze4Vllqij1zQR_K_8)
+ [Google Drive url](https://drive.google.com/drive/folders/1u_l-yvhS0shpW6e0tCiqPE7Bd1qQZKdD)
  
 2, P3D-199 trianed on Kinetics Optical Flow (TVL1):
 
- [Google Drive url](https://drive.google.com/open?id=1wn1zqJQRP69jWPDi7UApKPcAmLv_zPfw)
+ [Google Drive url](https://drive.google.com/drive/folders/1u_l-yvhS0shpW6e0tCiqPE7Bd1qQZKdD)
 
  
 ### Prepare Dataset UCF101
